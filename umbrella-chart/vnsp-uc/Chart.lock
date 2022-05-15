@@ -1,0 +1,15 @@
+dependencies:
+- name: common
+  repository: file://../common
+  version: 0.1.0
+- name: firstapi
+  repository: file://../firstapi
+  version: 0.1.0
+- name: prestage
+  repository: file://../prestage
+  version: 0.1.0
+- name: utils
+  repository: file://../utils
+  version: 0.1.0
+digest: sha256:dece6b26297d3b72606edca171f25fe442736b527b64e77ea9977ea368926a82
+generated: "2022-03-30T15:32:17.195923436+05:30"

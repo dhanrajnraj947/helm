@@ -1,0 +1,23 @@
+{{- include "common.deployment" . }}
+---
+{{- include "common.service" . }}
+---
+{{- include "common.hpa" . }}
+---
+{{ if .Values.kedaMemory.enabled }}
+{{- include "common.kedaMemory" . }}
+{{ end }}
+---
+{{ if .Values.kedaKafka.enabled }}
+{{- include "common.kedaKafka" . }}
+{{ end }}
+---
+{{ if .Values.kedaNewrelic.enabled }}
+{{- include "common.kedaNewrelic" . }}
+{{ end }}
+---
+{{ if .Values.kedaCPU.enabled }}
+{{- include "common.kedaCPU" . }}
+{{ end }}
+---
+{{- include "common.ingress" . }}

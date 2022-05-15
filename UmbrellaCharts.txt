@@ -1,0 +1,142 @@
+I. Umbrella Chart
+
+An umbrella chart references the version of the Helm chart itself and not the underlying version of the container image.
+An umbrella chart consists of many dependent sub-charts which are stored in the charts folder in the root folder. 
+
+Create chart 
+
+helm create common #common templates
+helm create vnsp-uc # conatins subcharts
+helm create firstapi #microservice
+helm create prestage #microservice
+
+common folder contains the Helm library chart
+vnsp-uc folder contains the Helm application chart
+
+-> Add dependecies in vnsp-uc folder
+Go to common>Chart.yml. -> update type: library
+Go to common>templates> Rename the templates for example below
+_deployment.tpl
+_service.tpl
+
+-> Go to individual microservice chart> templates> create a file
+add the following content (which ever templates you want to use as common)
+{{- include "common.deployment" . }}
+---
+{{- include "common.service" . }}
+---
+{{- include "common.hpa" . }}
+---
+{{- include "common.ingress" . }}
+---
+{{- include "common.serviceAccount" . }}
+
+-> Go Main UC "vnsp-uc"
+helm dependency update <Chart name>
+tarzip files would be created
+
+├── common
+│   ├── Chart.yaml
+│   ├── charts
+│   ├── templates
+│   │   ├── NOTES.txt
+│   │   ├── _deployment.tpl
+│   │   ├── _helpers.tpl
+│   │   ├── _hpa.tp1
+│   │   ├── _ingress.tp1
+│   │   ├── _kedaCPU.tpl
+│   │   ├── _kedaKafkaScaledObject.tpl
+│   │   ├── _kedaMemory.tp1
+│   │   ├── _kedaNewrelic.tpl
+│   │   ├── _service.tp1
+│   │   ├── _serviceaccount.tp1
+│   │   └── tests
+│   │       └── test-connection.yaml
+│   └── values.yaml
+├── firstapi
+│   ├── Chart.yaml
+│   ├── templates
+│   │   └── servicemanifest.yaml
+│   └── values.yaml
+├── prestage
+│   ├── Chart.yaml
+│   ├── templates
+│   │   ├── NOTES.txt
+│   │   ├── _helpers.tpl
+│   │   ├── servicemanifest.yaml
+│   │   └── tests
+│   │       └── test-connection.yaml
+│   └── values.yaml
+└── vnsp-uc
+    ├── Chart.lock
+    ├── Chart.yaml
+    ├── charts
+    │   ├── common-0.1.0.tgz
+    │   ├── firstapi-0.1.0.tgz
+    │   └── prestage-0.1.0.tgz
+    └── values.yaml
+	
+-> Run helm command
+helm upgrade --install <chartname> <path to umbreall chart>  -f <injection values.yaml> -f <injection values.yaml> --namespace <name space>
+
+helm upgrade --install vnsp /root/umbrella-chart/vnsp-uc  -f /root/firstapi.helm.yaml -f /root/prestage.helm.yaml --namespace rd
+
+-> kubectl get pods -n rd
+root@ip-172-31-16-141:~/umbrella-chart# helm list -n rd
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+vnsp    rd              6               2022-03-18 02:06:38.207231737 +0530 IST deployed        vnsp-uc-0.1.0   1.16.0
+
+-> root@ip-172-31-16-141:~/umbrella-chart# kubectl get pods -n rd
+NAME                             READY   STATUS    RESTARTS   AGE
+vnsp-firstapi-6b77b85b76-w84x7   1/1     Running   0          11h
+vnsp-prestage-6fc4cf784-2c62g    1/1     Running   0          11h
+vnsp-prestage-6fc4cf784-6cmbp    0/1     Error     0          11h
+
+-> root@ip-172-31-16-141:~/umbrella-chart# kubectl get svc -n rd
+NAME            TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+vnsp-firstapi   NodePort   10.104.180.121   <none>        8080:32644/TCP   11h
+vnsp-prestage   NodePort   10.100.210.40    <none>        8081:30645/TCP   11h
+
+-> root@ip-172-31-16-141:~/umbrella-chart# kubectl get deploy -n rd
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+vnsp-firstapi   1/1     1            1           11h
+vnsp-prestage   1/1     1            1           11h
+
+-> root@ip-172-31-16-141:~/umbrella-chart# kubectl get secret -n rd
+NAME                         TYPE                                  DATA   AGE
+default-token-s75wq          kubernetes.io/service-account-token   3      3d9h
+new-relic-secret             Opaque                                1      34m
+sh.helm.release.v1.vnsp.v1   helm.sh/release.v1                    1      11h
+sh.helm.release.v1.vnsp.v2   helm.sh/release.v1                    1      11h
+sh.helm.release.v1.vnsp.v3   helm.sh/release.v1                    1      85m
+sh.helm.release.v1.vnsp.v4   helm.sh/release.v1                    1      58m
+sh.helm.release.v1.vnsp.v5   helm.sh/release.v1                    1      34m
+sh.helm.release.v1.vnsp.v6   helm.sh/release.v1                    1      32m
+vnsp-firstapi-secret         Opaque                                7      3d9h
+vnsp-firstapi-token-hn5mz    kubernetes.io/service-account-token   3      11h
+vnsp-prestage-secret         Opaque                                6      3d9h
+vnsp-prestage-token-frf7z    kubernetes.io/service-account-token   3      11h
+root@ip-172-31-16-141:~/Swarna/umbrella-chart#
+-> To list helm charts
+helm list -n <name space>
+root@ip-172-31-16-141:~/Swarna/umbrella-chart# helm list -n rd
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+vnsp    rd              46              2022-03-22 13:54:44.328915354 +0530 IST deployed        vnsp-uc-0.1.0   1.16.0
+
+-> To delete chart
+helm delete <chart name> -n <name space>
+
+-> Roll back:
+1. helm history <release> -n <name space>
+
+root@ip-172-31-16-141:~/Swarna/umbrella-chart# helm history vnsp -n uc
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+1               Wed Mar 23 00:33:43 2022        superseded      vnsp-uc-0.1.0   1.16.0          Release "vnsp" failed: scaledobjects.keda.sh "vnsp-firstapi-scaler-kafka" already exists
+2               Wed Mar 23 00:41:41 2022        superseded      vnsp-uc-0.1.0   1.16.0          Upgrade complete
+3               Wed Mar 23 00:43:02 2022        superseded      vnsp-uc-0.1.0   1.16.0          Upgrade complete
+4               Wed Mar 23 10:14:55 2022        superseded      vnsp-uc-0.1.0   1.16.0          Upgrade complete
+5               Wed Mar 23 10:19:05 2022        deployed        vnsp-uc-0.1.0   1.16.0          Upgrade complete
+
+2. helm rollback <release> <revision> -n <name space>
+root@ip-172-31-16-141:~/Swarna/umbrella-chart# helm rollback vnsp 2 -n uc
+Rollback was a success! Happy Helming!

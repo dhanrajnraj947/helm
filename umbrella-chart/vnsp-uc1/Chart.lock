@@ -1,0 +1,12 @@
+dependencies:
+- name: common
+  repository: file://../common
+  version: 0.1.0
+- name: firstapi
+  repository: file://../firstapi
+  version: 0.1.0
+- name: vnsp-uc
+  repository: file://../vnsp-uc
+  version: 0.1.0
+digest: sha256:1a8c1b86bf5d683a26e2dc44ee92d768ebdddaff0d098ee99bebaf313cb87b39
+generated: "2022-03-31T22:51:23.410741456+05:30"

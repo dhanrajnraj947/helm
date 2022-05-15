@@ -1,0 +1,25 @@
+# Default values for CentralHelmCharts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+firstapi:
+  replicaCount: 1
+
+  image:
+    repository: swarnag12/java-app
+    pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+    tag: v1
+
+  service:
+    enabled: true
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+
+  resourcesLimit:
+    enabled: true
+    limitsCpu: 5m
+    limitsMemory: 2048Mi
+    requestsCpu: 2m
+    requestsMemory: 1024Mi

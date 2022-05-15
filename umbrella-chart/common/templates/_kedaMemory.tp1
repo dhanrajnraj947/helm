@@ -1,0 +1,25 @@
+{{ define "common.kedaMemory"  }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "common.fullname" . }}-scaler-memory
+  namespace: {{ .Release.Namespace }}
+spec:
+  pollingInterval: {{ .Values.scalerMemory.pollingInterval }}
+  minReplicaCount: {{ .Values.scalerMemory.minReplicaCount }}
+  maxReplicaCount: {{ .Values.scalerMemory.maxReplicaCount }}
+  cooldownPeriod: {{ .Values.scalerMemory.cooldownPeriod }}
+  advanced:                                          # Optional. Section to specify advanced options
+    horizontalPodAutoscalerConfig:                   # Optional. Section to specify HPA related options
+      behavior:                                      # Optional. Use to modify HPA's scaling behavior
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.scalerMemory.stabilizationWindowSeconds }}
+  scaleTargetRef:
+    name: {{ include "common.fullname" . }}
+  triggers:
+  - type: memory
+    metadata:
+      type: Utilization
+      value: {{ .Values.scalerMemory.value | quote }}
+{{- end }}
+
